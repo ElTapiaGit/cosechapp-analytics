@@ -149,3 +149,6 @@ Ubicado en el Centro de Reportes bajo la pestaña "Trimestral", se alimenta del 
 
 ### Actualización de Gráficos o Consultas SQL
 Si requieres añadir nuevas gráficas o reportes complejos, la recomendación principal es **crear una vista SQL (View) o una función en Supabase**. Esto mantiene la aplicación liviana, ya que toda la carga matemática se ejecuta del lado del servidor de base de datos de Supabase, y la app en Flutter simplemente consume un JSON plano estructurado.
+
+---
+© 2026 Jhon E. Tapia Vargas. Todos los derechos reservados. Software propietario y confidencial.
