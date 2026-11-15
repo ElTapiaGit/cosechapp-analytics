@@ -1,15 +1,10 @@
-/*
- * Este código hace 3 cosas a la vez:
- * Define los datos.
- * Prepara el guardado offline (Hive).
- * Prepara la lectura de la nube (Supabase).
- */
+import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
+import '../../core/theme/app_colors.dart';
 
-// Esta línea es OBLIGATORIA para que Hive genere el código binario
 part 'harvest_model.g.dart'; 
 
-@HiveType(typeId: 0) // typeId único para esta clase
+@HiveType(typeId: 0)
 class HarvestModel extends HiveObject {
   
   @HiveField(0)
@@ -19,28 +14,28 @@ class HarvestModel extends HiveObject {
   final int producerId;
 
   @HiveField(2)
-  final String producerName; // Guardamos el nombre aquí para no hacer consultas extra offline
+  final String producerName;
 
   @HiveField(3)
-  final String zoneName; // Igual con la zona
+  final String zoneName;
 
   @HiveField(4)
   final String dctoCode;
 
   @HiveField(5)
-  final DateTime cutDate; // Fecha Corte (Histórica)
+  final DateTime cutDate;
 
   @HiveField(6)
-  final DateTime nextEstimatedDate; // Próxima Cosecha (Calculada)
+  final DateTime nextEstimatedDate;
 
   @HiveField(7)
-  String status; // 'PENDING', 'TO_VISIT', 'VISITED', 'HARVESTED', 'CANCELLED'
+  String status;
 
   @HiveField(8)
   String? observation;
 
   @HiveField(9)
-  final int cycleMonths; // 3 o 4
+  final int cycleMonths;
 
   @HiveField(10) 
   final String programmer; 
@@ -59,42 +54,60 @@ class HarvestModel extends HiveObject {
     required this.programmer,
   });
 
-  // --- Logica Visual (Getters) ---
-  
-  // Calcula si es urgente (Faltan 7 días o menos y no se ha visitado)
-  bool get isUrgent {
-    if (status != 'PENDING' && status != 'TO_VISIT') return false;
-    final daysLeft = nextEstimatedDate.difference(DateTime.now()).inDays;
-    return daysLeft <= 7;
+  // --- LÓGICA DE ESTADO DINÁMICO BASADO EN FECHAS ---
+
+  DateTime get _normalizedToday {
+    final now = DateTime.now();
+    return DateTime(now.year, now.month, now.day);
   }
 
-  // --- Conversion desde Supabase (JSON) ---
+  DateTime get _normalizedTarget => DateTime(
+    nextEstimatedDate.year,
+    nextEstimatedDate.month,
+    nextEstimatedDate.day,
+  );
+
+  /// Indica si la fecha actual ya alcanzó o superó la fecha programada
+  bool get isReadyForHarvest => !_normalizedToday.isBefore(_normalizedTarget);
+
+  /// Retorna la cantidad de días restantes (positivo: faltan días; negativo: atrasado)
+  int get daysRemaining => _normalizedTarget.difference(_normalizedToday).inDays;
+
+  /// Estado dinámico de negocio: "POR COSECHAR" o "PRÓXIMA COSECHA"
+  String get computedStatus {
+    return isReadyForHarvest ? "POR COSECHAR" : "PRÓXIMA COSECHA";
+  }
+
+  /// Color semántico según la regla temporal
+  Color get statusColor {
+    return isReadyForHarvest ? AppColors.statusCancelled : AppColors.primaryGreen;
+  }
+
+  /// Color de fondo con transparencia para badges y chips
+  Color get statusBgColor {
+    return statusColor.withValues(alpha: 0.1);
+  }
+
+  // --- Conversión desde Supabase (JSON) ---
   factory HarvestModel.fromJson(Map<String, dynamic> json) {
-    // Extraccion segura del nombre de zona
     String zonaSegura = 'Sin Zona';
-    
     try {
       if (json['producers'] != null && json['producers']['zones'] != null) {
-        zonaSegura = json['producers']['zones']['name'];
+        zonaSegura = json['producers']['zones']['name'] ?? 'Sin Zona';
       }
-    } catch (e) {
-      // ignore: avoid_print
-      print("Error parseando zona: $e");
-    }
+    } catch (_) {}
 
     return HarvestModel(
       id: json['id'] ?? 0,
       producerId: json['producer_id'] ?? 0,
-      // Supabase devuelve objetos anidados cuando hacemos joins
-      producerName: json['producers'] != null ? json['producers']['full_name'] : 'Desconocido',
+      producerName: json['producers'] != null ? (json['producers']['full_name'] ?? 'Desconocido') : 'Desconocido',
       zoneName: zonaSegura,
       dctoCode: json['dcto_code']?.toString() ?? '',
-      cutDate: DateTime.parse(json['cut_date']),
-      nextEstimatedDate: DateTime.parse(json['next_estimated_date']),
+      cutDate: DateTime.tryParse(json['cut_date']?.toString() ?? '') ?? DateTime.now(),
+      nextEstimatedDate: DateTime.tryParse(json['next_estimated_date']?.toString() ?? '') ?? DateTime.now(),
       status: json['status'] ?? 'PENDING',
       observation: json['observation'],
       cycleMonths: json['cycle_months'] ?? 4,
-      // Mapeamos el programador (si viene null, ponemos 'General')
       programmer: json['programmer']?.toString() ?? 'General',
     );
   }

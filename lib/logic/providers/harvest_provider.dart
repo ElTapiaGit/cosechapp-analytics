@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:supabase_flutter/Supabase_flutter.dart';
 import '../../data/models/harvest_model.dart';
 import '../../data/repositories/harvest_repository.dart';
 
@@ -105,29 +104,5 @@ class HarvestProvider extends ChangeNotifier {
       return matchZone && matchProg && matchDate && matchOverdue;
     }).toList();
     notifyListeners();
-  }
-
-  // Método para actualizar estado (Visita, Cosecha, Cancelación)
-  Future<bool> updateStatus(int id, String newStatus, {String? observation}) async {
-    try {
-      // 1. Actualizar en Supabase
-      final data = {
-        'status': newStatus,
-        'updated_at': DateTime.now().toIso8601String(),
-        if (newStatus == 'VISITED') 'visit_date': DateTime.now().toIso8601String(),
-        if (observation != null) 'observation': observation,
-      };
-
-      // Llamada directa a la tabla (puedes mover esto al repository si prefieres ser estricto)
-      await Supabase.instance.client.from('harvest_records').update(data).eq('id', id);
-
-      // 2. Recargar la lista para ver el cambio en pantalla
-      await loadHarvests();
-      return true;
-    } catch (e) {
-      // ignore: avoid_print
-      print("Error actualizando estado: $e");
-      return false;
-    }
   }
 }

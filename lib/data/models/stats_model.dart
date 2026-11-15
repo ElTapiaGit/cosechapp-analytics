@@ -29,12 +29,4 @@ class ZoneStat {
   final double totalReceived; // C.RECEP 
 
   ZoneStat({required this.zoneName, required this.totalQuantity, required this.totalReceived});
-
-  factory ZoneStat.fromJson(Map<String, dynamic> json) {
-    return ZoneStat(
-      zoneName: json['zone_name'],
-      totalQuantity: (json['total_quantity'] ?? 0).toDouble(),
-      totalReceived: (json['total_received'] ?? 0).toDouble(),
-    );
-  }
 }

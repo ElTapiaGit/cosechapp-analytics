@@ -3,6 +3,7 @@ import 'package:cosecha_app/logic/providers/projection_provider.dart';
 import 'package:cosecha_app/logic/providers/quarterly_dashboard_provider.dart';
 import 'package:cosecha_app/logic/providers/custom_report_provider.dart';
 import 'package:cosecha_app/logic/providers/stats_provider.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
@@ -13,8 +14,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'package:cosecha_app/core/config/app_config.dart';
 import 'package:cosecha_app/core/theme/app_colors.dart';
-import 'package:cosecha_app/core/services/supabase_service.dart';
 import 'package:cosecha_app/core/services/storage_service.dart';
 import 'package:cosecha_app/logic/providers/harvest_provider.dart';
 import 'package:cosecha_app/logic/providers/import_harvest_provider.dart';
@@ -33,14 +34,72 @@ import 'ui/screens/web_upload/import_harvest_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   usePathUrlStrategy();
-  await dotenv.load(fileName: ".env");
 
-  // Inicializar Supabase
-  await SupabaseService.initialize();
-  // Iniciar Hive (Base de datos local)
-  await StorageService.initialize();
-  // Inicializar formato de fechas para español (Bolivia)
-  await initializeDateFormatting('es_BO', null);
+  String? initError;
+
+  // 1. Evitar peticiones HTTP bloqueantes en Web. Solo cargar .env físico en Móvil.
+  if (!kIsWeb) {
+    try {
+      await dotenv.load(fileName: ".env");
+    } catch (e) {
+      debugPrint("Advertencia: No se pudo cargar .env localmente: $e");
+    }
+  }
+
+  // 2. Inicialización instantánea de Supabase
+  try {
+    // Si es Web, usa AppConfig directo (0 milisegundos). Si es móvil, usa dotenv.
+    final String supabaseUrl = kIsWeb 
+        ? AppConfig.supabaseUrl 
+        : (dotenv.env['SUPABASE_URL'] ?? AppConfig.supabaseUrl);
+
+    final String supabaseAnonKey = kIsWeb 
+        ? AppConfig.supabaseAnonKey 
+        : (dotenv.env['SUPABASE_ANON_KEY'] ?? AppConfig.supabaseAnonKey);
+
+    if (supabaseUrl.isNotEmpty && supabaseAnonKey.isNotEmpty) {
+      await Supabase.initialize(
+        url: supabaseUrl,
+        anonKey: supabaseAnonKey,
+      );
+    } else {
+      initError = "Error crítico: Variables de Supabase vacías.";
+    }
+  } catch (e) {
+    initError = "Error al inicializar Supabase: $e";
+    debugPrint(initError);
+  }
+
+  try {
+    await StorageService.initialize();
+  } catch (e) {
+    debugPrint("Error al inicializar StorageService: $e");
+  }
+
+  try {
+    await initializeDateFormatting('es_BO', null);
+  } catch (e) {
+    debugPrint("Error al inicializar formato de fechas: $e");
+  }
+
+  if (initError != null && kIsWeb) {
+    // Si hay error crítico de inicialización, mostrarlo en pantalla en lugar de pantalla blanca
+    runApp(MaterialApp(
+      home: Scaffold(
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Text(
+              initError,
+              style: const TextStyle(color: Colors.red, fontSize: 16),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+      ),
+    ));
+    return;
+  }
 
   runApp(const MyApp());
 }

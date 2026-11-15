@@ -303,40 +303,10 @@ class _HarvestCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Definir colores segun estado con constantes semánticas de AppColors
-    Color statusColor;
-    Color statusBgColor;
-    String statusText;
-    final daysLeft = harvest.nextEstimatedDate.difference(DateTime.now()).inDays;
-    
-    // Estados Finales (Prioridad Alta)
-    if (harvest.status == 'CANCELLED') {
-      statusColor = AppColors.statusCancelled;
-      statusBgColor = AppColors.statusCancelledBg;
-      statusText = "CANCELADO";
-    } else if (harvest.status == 'HARVESTED') {
-      statusColor = AppColors.statusHarvested;
-      statusBgColor = AppColors.statusHarvestedBg;
-      statusText = "COSECHADO";
-    } else if (harvest.status == 'VISITED') {
-      statusColor = AppColors.statusVisited;
-      statusBgColor = AppColors.statusVisitedBg;
-      statusText = "VISITADO";
-    } else {
-      if (daysLeft < 0) {
-        statusColor = AppColors.statusOverdue;
-        statusBgColor = AppColors.statusOverdueBg;
-        statusText = "ATRASADO (${daysLeft.abs()} días)";
-      } else if (harvest.isUrgent) {
-        statusColor = AppColors.statusUrgent;
-        statusBgColor = AppColors.statusUrgentBg;
-        statusText = "POR VISITAR";
-      } else {
-        statusColor = AppColors.statusPending;
-        statusBgColor = AppColors.statusPendingBg;
-        statusText = "PENDIENTE";
-      }
-    }
+    // Consumo del estado dinámico calculado en HarvestModel
+    final statusColor = harvest.statusColor;
+    final statusBgColor = harvest.statusBgColor;
+    final statusText = harvest.computedStatus;
 
     final dateFormattedDay = DateFormat('dd').format(harvest.nextEstimatedDate);
     final dateFormattedMonth = DateFormat('MMM', 'es_BO').format(harvest.nextEstimatedDate).toUpperCase();

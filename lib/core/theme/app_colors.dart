@@ -22,29 +22,21 @@ class AppColors {
   static final Color borderGrey = Colors.grey.shade300;
   static final Color shadowLight = Colors.black.withValues(alpha: 0.05);
 
-  // Colores de estados operativos de cosecha y sus versiones de fondo para badges (10% alfa)
+  // Colores de estados operativos de cosecha
   // 1. Cancelado
   static const Color statusCancelled = Color(0xFFD32F2F);
   static final Color statusCancelledBg = const Color(0xFFD32F2F).withValues(alpha: 0.1);
 
   // 2. Atrasado crítico
   static const Color statusOverdue = Color(0xFFB71C1C);
-  static final Color statusOverdueBg = const Color(0xFFB71C1C).withValues(alpha: 0.1);
 
   // 3. Por visitar / Urgente
   static const Color statusUrgent = Color(0xFFFF9800);
-  static final Color statusUrgentBg = const Color(0xFFFF9800).withValues(alpha: 0.1);
 
   // 4. Cosechado
   static const Color statusHarvested = Colors.blue;
-  static final Color statusHarvestedBg = Colors.blue.withValues(alpha: 0.1);
 
   // 5. Visitado
   static const Color statusVisited = Colors.purple;
-  static final Color statusVisitedBg = Colors.purple.withValues(alpha: 0.1);
-
-  // 6. Pendiente
-  static const Color statusPending = Color(0xFF2F7F34);
-  static final Color statusPendingBg = const Color(0xFF2F7F34).withValues(alpha: 0.1);
 }
 

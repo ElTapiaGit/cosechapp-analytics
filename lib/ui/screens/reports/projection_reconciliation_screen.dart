@@ -193,7 +193,24 @@ class _ProjectionReconciliationScreenState extends State<ProjectionReconciliatio
                                                 // Datos logísticos de fechas
                                                 DataCell(SizedBox(width: 95, child: Text(item.statusReconciliacion != 'FALTANTE' ? '${item.year}-${item.month.toString().padLeft(2, '0')}-05' : '-', overflow: TextOverflow.ellipsis))), 
                                                 DataCell(SizedBox(width: 120, child: Text(item.programador, overflow: TextOverflow.ellipsis))),
-                                                DataCell(SizedBox(width: 95, child: Text(item.statusReconciliacion != 'FALTANTE' ? '${item.year}-${(item.month + 4).toString().padLeft(2, '0')}-05' : '-', overflow: TextOverflow.ellipsis))),
+                                                DataCell(
+                                                  SizedBox(
+                                                    width: 95,
+                                                    child: Text(
+                                                      item.statusReconciliacion != 'FALTANTE'
+                                                          ? (() {
+                                                              final nextCut = DateTime(item.year, item.month + 4, 5);
+                                                              final y = nextCut.year;
+                                                              final m = nextCut.month.toString().padLeft(2, '0');
+                                                              final d = nextCut.day.toString().padLeft(2, '0');
+                                                              return '$y-$m-$d';
+                                                            })()
+                                                          : '-',
+                                                      overflow: TextOverflow.ellipsis,
+                                                      style: const TextStyle(fontWeight: FontWeight.w500),
+                                                    ),
+                                                  ),
+                                                ),
 
                                                 // Celda de Justificaciones con el Dropdown Integrado
                                                 DataCell(
